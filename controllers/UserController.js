@@ -91,7 +91,7 @@ export const register = async (req, res) => {
     const user = await doc.save();
     console.log('User saved:', user._id);
 
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ _id: user._id }, 'secret', {
       expiresIn: 70,
     });
     console.log('Generated token for user:', user._id);
