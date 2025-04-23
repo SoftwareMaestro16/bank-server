@@ -5,7 +5,7 @@ import { validationResult } from 'express-validator';
 
 export const register = async (req, res) => {
     console.log('Register route hit with body:', req.body);
-    
+
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -39,10 +39,11 @@ export const register = async (req, res) => {
         });
 
     } catch (err) {
-        console.log(err);
+        console.error('Ошибка при регистрации:', err.message, err.stack); // Подробный лог
         return res.status(500).json({
-            message: 'Failed to register'
-        })
+            message: 'Failded to register',
+            error: err.message
+        });
     }
 }
 
