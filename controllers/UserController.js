@@ -3,6 +3,45 @@ import bcrypt from 'bcrypt';
 import UserModel from '../models/User.js';
 import { validationResult } from 'express-validator';
 
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const generateCardNumber = (prefix) => {
+  let cardNumber = prefix.toString();
+  const remainingLength = 16 - cardNumber.length;
+  for (let i = 0; i < remainingLength - 1; i++) {
+    cardNumber += getRandomInt(0, 9);
+  }
+
+  let sum = 0;
+  let isEven = false;
+  for (let i = cardNumber.length - 1; i >= 0; i--) {
+    let digit = parseInt(cardNumber[i]);
+    if (isEven) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+    sum += digit;
+    isEven = !isEven;
+  }
+  const checkDigit = (10 - (sum % 10)) % 10;
+  cardNumber += checkDigit;
+
+  return cardNumber;
+};
+
+// Helper function to generate random expiration date
+const generateExpirationDate = () => {
+  const month = getRandomInt(1, 12).toString().padStart(2, '0'); // 01-12
+  const year = getRandomInt(2026, 2032); // 2026-2032
+  // Set to first day of the month for consistency
+  return new Date(`${year}-${month}-01`);
+};
+
+// Helper function to generate random 3-digit CVV
+const generateCVV = () => {
+  return getRandomInt(0, 999).toString().padStart(3, '0'); // e.g., 007, 123
+};
+
 export const register = async (req, res) => {
   try {
     console.log('Register route hit with body:', req.body);
@@ -28,6 +67,20 @@ export const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
 
+    const isVisa = Math.random() < 0.5;
+    const cardPrefix = isVisa ? '4' : '54';
+    const cardType = isVisa ? 'Visa' : 'Mastercard';
+
+    const card = {
+      cardNumber: generateCardNumber(cardPrefix),
+      cardHolderName: `${req.body.firstName} ${req.body.lastName}`.toUpperCase(),
+      expirationDate: generateExpirationDate(),
+      cvv: generateCVV(),
+      type: cardType,
+    };
+
+    console.log('Generated card:', card);
+
     const doc = new UserModel({
       firstName: req.body.firstName,
       lastName: req.body.lastName,
@@ -35,12 +88,13 @@ export const register = async (req, res) => {
       passwordHash: hash,
       address: req.body.address,
       phoneNumber: req.body.phoneNumber,
+      userCards: { cards: [card] },
     });
 
     const user = await doc.save();
     console.log('User saved:', user._id);
 
-    const token = jwt.sign({ _id: user._id }, "secret", {
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
       expiresIn: 70,
     });
     console.log('Generated token for user:', user._id);
