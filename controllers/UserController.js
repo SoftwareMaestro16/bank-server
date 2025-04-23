@@ -5,47 +5,48 @@ import { validationResult } from 'express-validator';
 
 const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-const generateCardNumber = (prefix) => {
-  let cardNumber = prefix.toString();
-  const remainingLength = 16 - cardNumber.length;
-  for (let i = 0; i < remainingLength - 1; i++) {
-    cardNumber += getRandomInt(0, 9);
-  }
-
-  let sum = 0;
-  let isEven = false;
-  for (let i = cardNumber.length - 1; i >= 0; i--) {
-    let digit = parseInt(cardNumber[i]);
-    if (isEven) {
-      digit *= 2;
-      if (digit > 9) digit -= 9;
+const generateCardNumber = async (prefix) => {
+  let cardNumber;
+  let isUnique = false;
+  while (!isUnique) {
+    cardNumber = prefix.toString();
+    const remainingLength = 16 - cardNumber.length;
+    for (let i = 0; i < remainingLength - 1; i++) {
+      cardNumber += getRandomInt(0, 9);
     }
-    sum += digit;
-    isEven = !isEven;
+    let sum = 0;
+    let isEven = false;
+    for (let i = cardNumber.length - 1; i >= 0; i--) {
+      let digit = parseInt(cardNumber[i]);
+      if (isEven) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      isEven = !isEven;
+    }
+    const checkDigit = (10 - (sum % 10)) % 10;
+    cardNumber += checkDigit;
+    const existingCard = await UserModel.findOne({ 'userCards.cards.cardNumber': cardNumber });
+    if (!existingCard) isUnique = true;
   }
-  const checkDigit = (10 - (sum % 10)) % 10;
-  cardNumber += checkDigit;
-
   return cardNumber;
 };
 
 const generateExpirationDate = () => {
-  const month = getRandomInt(1, 12).toString().padStart(2, '0'); 
-  const year = getRandomInt(2026, 2032); 
+  const month = getRandomInt(1, 12).toString().padStart(2, '0');
+  const year = getRandomInt(2026, 2032);
   return new Date(`${year}-${month}-01`);
 };
 
 const generateCVV = () => {
-  return getRandomInt(0, 999).toString().padStart(3, '0'); 
+  return getRandomInt(0, 999).toString().padStart(3, '0');
 };
 
 export const register = async (req, res) => {
   try {
-    console.log('Register route hit with body:', req.body);
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
@@ -54,7 +55,6 @@ export const register = async (req, res) => {
     });
 
     if (existingUser) {
-      console.log('User already exists with email or phone:', req.body.email, req.body.phoneNumber);
       return res.status(400).json({
         message: 'Пользователь с таким email или номером телефона уже существует',
       });
@@ -69,14 +69,12 @@ export const register = async (req, res) => {
     const cardType = isVisa ? 'Visa' : 'Mastercard';
 
     const card = {
-      cardNumber: generateCardNumber(cardPrefix),
+      cardNumber: await generateCardNumber(cardPrefix),
       cardHolderName: `${req.body.firstName} ${req.body.lastName}`.toUpperCase(),
       expirationDate: generateExpirationDate(),
       cvv: generateCVV(),
       type: cardType,
     };
-
-    console.log('Generated card:', card);
 
     const doc = new UserModel({
       firstName: req.body.firstName,
@@ -89,18 +87,15 @@ export const register = async (req, res) => {
     });
 
     const user = await doc.save();
-    console.log('User saved:', user._id);
 
     const token = jwt.sign({ _id: user._id }, 'secret', {
       expiresIn: 70,
     });
-    console.log('Generated token for user:', user._id);
 
     const { passwordHash, ...userData } = user._doc;
 
     res.json({ ...userData, token });
   } catch (err) {
-    console.error('Ошибка при регистрации:', err.message, err.stack);
     res.status(500).json({
       message: 'Failed to register',
       error: err.message,
