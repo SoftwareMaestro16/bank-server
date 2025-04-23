@@ -89,7 +89,7 @@ export const register = async (req, res) => {
     const user = await doc.save();
 
     const token = jwt.sign({ _id: user._id }, 'secret', {
-      expiresIn: 70,
+      expiresIn: '10d',
     });
 
     const { passwordHash, ...userData } = user._doc;
@@ -132,7 +132,7 @@ export const login = async (req, res) => {
     }
 
     const token = jwt.sign({ _id: user._id }, "secret", {
-      expiresIn: 70,
+      expiresIn: '10d',
     });
     console.log('Generated token for user:', user._id);
 
