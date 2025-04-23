@@ -41,7 +41,7 @@ export const register = async (req, res) => {
     console.log('User saved:', user._id);
 
     const token = jwt.sign({ _id: user._id }, "secret", {
-      expiresIn: '30d',
+      expiresIn: 70,
     });
     console.log('Generated token for user:', user._id);
 
