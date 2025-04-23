@@ -29,17 +29,14 @@ const generateCardNumber = (prefix) => {
   return cardNumber;
 };
 
-// Helper function to generate random expiration date
 const generateExpirationDate = () => {
-  const month = getRandomInt(1, 12).toString().padStart(2, '0'); // 01-12
-  const year = getRandomInt(2026, 2032); // 2026-2032
-  // Set to first day of the month for consistency
+  const month = getRandomInt(1, 12).toString().padStart(2, '0'); 
+  const year = getRandomInt(2026, 2032); 
   return new Date(`${year}-${month}-01`);
 };
 
-// Helper function to generate random 3-digit CVV
 const generateCVV = () => {
-  return getRandomInt(0, 999).toString().padStart(3, '0'); // e.g., 007, 123
+  return getRandomInt(0, 999).toString().padStart(3, '0'); 
 };
 
 export const register = async (req, res) => {
