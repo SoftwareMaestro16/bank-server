@@ -8,3 +8,9 @@ export const registerValidation = [
     body('address', 'Address is required').isLength({ min: 1 }),
     body('phoneNumber', 'Phone number is required').isLength({ min: 1 }),
 ]
+
+export const loginValidation = [
+    body('email').isEmail().withMessage('Invalid email format'),
+    body('password').isString().notEmpty().withMessage('Password is required'),
+  ];
+  
