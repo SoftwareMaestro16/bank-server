@@ -5,7 +5,7 @@ import { validationResult } from 'express-validator';
 
 export const register = async (req, res) => {
     try {
-      UserModel.syncIndexes()
+    //   UserModel.syncIndexes()
       console.log('Register route hit with body:', req.body);
   
       const errors = validationResult(req);
