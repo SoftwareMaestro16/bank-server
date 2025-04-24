@@ -94,7 +94,8 @@ export const register = async (req, res) => {
         transactions: [{
           amount: 10,
           type: "received",
-          date: new Date()
+          date: new Date(),
+          fromOrTo: "FinBank"
         }]
       }
     });
