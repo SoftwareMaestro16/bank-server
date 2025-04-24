@@ -56,7 +56,7 @@ export const register = async (req, res) => {
 
     if (existingUser) {
       return res.status(400).json({
-        message: 'Пользователь с таким email или номером телефона уже существует',
+        message: 'A user with this email or phone number already exists.',
       });
     }
 
@@ -74,7 +74,6 @@ export const register = async (req, res) => {
       expirationDate: generateExpirationDate(),
       cvv: generateCVV(),
       type: cardType,
-      balance: 10,
     };
 
     const doc = new UserModel({
@@ -87,24 +86,23 @@ export const register = async (req, res) => {
       userCards: { cards: [card] },
       userNotifications: {
         notifications: [{
-          message: 'Dear Customer, thank you for choosing our bank. A $10 bonus has been credited to your card.',
-          date: new Date(),
-        }],
+          message: "Dear Customer, thank you for choosing our bank. A $10 bonus has been credited to your card.",
+          date: new Date()
+        }]
       },
       userTransactions: {
         transactions: [{
           amount: 10,
-          type: 'received',
-          date: new Date(),
-          fromOrTo: 'FinBank',
-        }],
-      },
+          type: "received",
+          date: new Date()
+        }]
+      }
     });
 
     const user = await doc.save();
 
     const token = jwt.sign({ _id: user._id }, 'secret', {
-      expiresIn: 70,
+      expiresIn: '10d',
     });
 
     const { passwordHash, ...userData } = user._doc;
@@ -113,6 +111,78 @@ export const register = async (req, res) => {
   } catch (err) {
     res.status(500).json({
       message: 'Failed to register',
+      error: err.message,
+    });
+  }
+};
+
+export const login = async (req, res) => {
+  try {
+    console.log('Login route hit with body:', req.body);
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const user = await UserModel.findOne({ email: req.body.email });
+
+    if (!user) {
+      console.log('User not found for email:', req.body.email);
+      return res.status(400).json({
+        message: 'Invalid email or password',
+      });
+    }
+
+    const isValidPass = await bcrypt.compare(req.body.password, user._doc.passwordHash);
+
+    if (!isValidPass) {
+      console.log('Invalid password for user:', req.body.email);
+      return res.status(400).json({
+        message: 'Invalid email or password',
+      });
+    }
+
+    const token = jwt.sign({ _id: user._id }, "secret", {
+      expiresIn: '10d',
+    });
+    console.log('Generated token for user:', user._id);
+
+    const { passwordHash, ...userData } = user._doc;
+
+    res.json({
+      ...userData,
+      token,
+    });
+  } catch (err) {
+    console.error('Ошибка при входе:', err.message, err.stack);
+    res.status(500).json({
+      message: 'Failed to login',
+      error: err.message,
+    });
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    console.log('getMe called with userId:', req.userId);
+    const user = await UserModel.findById(req.userId);
+
+    if (!user) {
+      console.log('User not found for ID:', req.userId);
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    const { passwordHash, ...userData } = user._doc;
+
+    res.json(userData);
+  } catch (err) {
+    console.error('Error in getMe:', err.message, err.stack);
+    res.status(500).json({
+      message: 'Failed to get user',
       error: err.message,
     });
   }
