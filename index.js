@@ -36,17 +36,6 @@ app.use(cors({
 
 app.use(express.json());
 
-console.log(typeof registerValidation); 
-console.log(typeof UserController.register); 
-
-if (typeof registerValidation !== 'function') {
-  throw new Error('registerValidation must be a function');
-}
-
-if (typeof UserController.register !== 'function') {
-  throw new Error('UserController.register must be a function');
-}
-
 app.get('/', (req, res) => {
   res.send('test');
 });
