@@ -84,6 +84,19 @@ export const register = async (req, res) => {
       address: req.body.address,
       phoneNumber: req.body.phoneNumber,
       userCards: { cards: [card] },
+      userNotifications: {
+        notifications: [{
+          message: "Dear Customer, thank you for choosing our bank. A $10 bonus has been credited to your card.",
+          date: new Date()
+        }]
+      },
+      userTransactions: {
+        transactions: [{
+          amount: 10,
+          type: "received",
+          date: new Date()
+        }]
+      }
     });
 
     const user = await doc.save();
