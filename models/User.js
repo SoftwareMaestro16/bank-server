@@ -57,30 +57,45 @@ const UserSchema = new mongoose.Schema({
         }]
     },
     userNotifications: {
-        notifications: {
-            type: [{
-                date: { type: Date, default: Date.now },
-                message: { type: String }
-            }],
-            default: () => [{
-                message: "Dear Customer, thank you for choosing our bank. A $10 bonus has been credited to your card.",
-                date: new Date()
-            }]
-        }
+        notifications: [{
+            date: {
+                type: Date,
+                default: Date.now
+            },
+            message: {
+                type: String,
+                required: true
+            },
+            _id: {
+                type: mongoose.Schema.Types.ObjectId,
+                auto: true
+            }
+        }]
     },
     userTransactions: {
-        transactions: {
-            type: [{
-                date: { type: Date, default: Date.now },
-                amount: { type: Number, required: true },
-                type: { type: String, enum: ["received", "sent"], required: true }
-            }],
-            default: () => [{
-                amount: 10,
-                type: "received",
-                date: new Date()
-            }]
-        }
+        transactions: [{
+            date: {
+                type: Date,
+                default: Date.now
+            },
+            amount: {
+                type: Number,
+                required: true
+            },
+            type: {
+                type: String,
+                enum: ['received', 'sent'],
+                required: true
+            },
+            fromOrTo: {
+                type: String,
+                required: true
+            },
+            _id: {
+                type: mongoose.Schema.Types.ObjectId,
+                auto: true
+            }
+        }]
     }
 }, {
     timestamps: true
