@@ -46,6 +46,10 @@ app.post('/auth/login', UserController.login);
 
 app.get('/auth/me', checkAuth, UserController.getMe);
 
+app.get('/notifications', checkAuth, UserController.getNotifications);
+
+app.get('/transactions', checkAuth, UserController.getTransactions);
+
 const PORT = 3500;
 const localIP = getLocalIP();
 

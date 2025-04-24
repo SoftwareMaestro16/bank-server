@@ -187,3 +187,47 @@ export const getMe = async (req, res) => {
     });
   }
 };
+
+export const getNotifications = async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    const notifications = user.userNotifications.notifications;
+
+    res.json(notifications);
+  } catch (err) {
+    console.error('Error in getNotifications:', err.message, err.stack);
+    res.status(500).json({
+      message: 'Failed to get notifications',
+      error: err.message,
+    });
+  }
+}
+
+export const getTransactions = async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    const transactions = user.userTransactions.transactions;
+
+    res.json(transactions);
+  } catch (err) {
+    console.error('Error in getTransactions:', err.message, err.stack);
+    res.status(500).json({
+      message: 'Failed to get transactions',
+      error: err.message,
+    });
+  }
+}
