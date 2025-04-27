@@ -230,3 +230,79 @@ export const getTransactions = async (req, res) => {
     });
   }
 };
+
+export const setTransfer = async (req, res) => {
+  try {
+    const { amount, fromCardNumber, toCardNumber } = req.body;
+
+    if (!amount || !fromCardNumber || !toCardNumber) {
+      return res.status(400).json({
+        message: 'Amount, fromCardNumber, and toCardNumber are required',
+      });
+    }
+
+    const sender = await UserModel.findById(req.userId);
+    if (!sender) {
+      return res.status(404).json({
+        message: 'Sender not found',
+      });
+    }
+
+    const senderCard = sender.userCards.cards.find(card => card.cardNumber === fromCardNumber);
+    if (!senderCard) {
+      return res.status(404).json({
+        message: 'Sender card not found',
+      });
+    }
+
+    if (senderCard.balance < amount) {
+      return res.status(400).json({
+        message: 'Insufficient funds',
+      });
+    }
+
+    const receiver = await UserModel.findOne({ 'userCards.cards.cardNumber': toCardNumber });
+    if (!receiver) {
+      return res.status(404).json({
+        message: 'Receiver not found',
+      });
+    }
+
+    const receiverCard = receiver.userCards.cards.find(card => card.cardNumber === toCardNumber);
+    if (!receiverCard) {
+      return res.status(404).json({
+        message: 'Receiver card not found',
+      });
+    }
+
+    senderCard.balance -= amount;
+    sender.userTransactions.transactions.push({
+      date: new Date(),
+      amount,
+      type: 'sent',
+      fromOrTo: `${receiver.firstName[0]}. ${receiver.lastName}`,
+    });
+
+    receiverCard.balance += amount;
+    receiver.userTransactions.transactions.push({
+      date: new Date(),
+      amount,
+      type: 'received',
+      fromOrTo: `${sender.firstName[0]}. ${sender.lastName}`,
+    });
+
+    await sender.save();
+    await receiver.save();
+
+    res.json({
+      message: 'Transfer successful',
+      senderBalance: senderCard.balance,
+      receiverBalance: receiverCard.balance,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: 'Failed to process transfer',
+      error: err.message,
+    });
+  }
+};
