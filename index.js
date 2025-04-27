@@ -50,7 +50,7 @@ app.get('/notifications', checkAuth, UserController.getNotifications);
 
 app.get('/transactions', checkAuth, UserController.getTransactions);
 
-app.get('/transfer', checkAuth, UserController.setTransfer);
+app.post('/transfer', checkAuth, UserController.setTransfer);
 
 const PORT = 3500;
 const localIP = getLocalIP();
